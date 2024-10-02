@@ -1,25 +1,35 @@
 package com.smu.love119.domain.post.entity;
 
+import com.smu.love119.domain.user.entity.User;
+import com.smu.love119.global.audit.BaseEntity;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "post")
-
-public class Post {
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class Post extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @Column(name = "post_title", length = 50, nullable = false)
-    private String title;
+    private String postTitle;
 
     @Column(name = "post_content", length = 1000, nullable = false)
-    private String content;
+    private String postContent;
 
     @Column(name = "post_view", nullable = false)
     private int viewCount = 0;
@@ -31,103 +41,34 @@ public class Post {
     @Column(name = "mbti", columnDefinition = "ENUM('ISTJ','ISFJ','INFJ','INTJ','ISTP','ISFP','INFP','INTP','ESTP','ESFP','ENFP','ENTP','ESTJ','ENTJ','ESFJ','ENFJ')")
     private MBTI mbti;
 
-    @Column(name = "created_date", nullable = false)
-    private LocalDateTime createdDate = LocalDateTime.now();
-
-    @Column(name = "updated_date")
-    private LocalDateTime updatedDate;
-
     @Column(name = "deleted_date")
     private LocalDateTime deletedDate;
 
-    // 생성자, Getter 및 Setter
-    public Post() {}
-
-    // 추가 생성자나 메소드 필요시 여기에 작성
+    @OneToMany(mappedBy = "post", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
+    private List<PostComment> postComments = new ArrayList<>();
 
     public enum MBTI {
         ISTJ, ISFJ, INFJ, INTJ, ISTP, ISFP, INFP, INTP,
         ESTP, ESFP, ENFP, ENTP, ESTJ, ENTJ, ESFJ, ENFJ
     }
 
-    // Getters and Setters
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getContent() {
-        return content;
-    }
-
-    public void setContent(String content) {
-        this.content = content;
-    }
-
-    public int getViewCount() {
-        return viewCount;
-    }
-
-    public void setViewCount(int viewCount) {
+    @Builder
+    public Post(
+            User user,
+            String postTitle,
+            String postContent,
+            int viewCount,
+            int likeCount,
+            MBTI mbti,
+            LocalDateTime deletedDate
+    ) {
+        this.user = user;
+        this.postTitle = postTitle;
+        this.postContent = postContent;
         this.viewCount = viewCount;
-    }
-
-    public int getLikeCount() {
-        return likeCount;
-    }
-
-    public void setLikeCount(int likeCount) {
         this.likeCount = likeCount;
-    }
-
-    public MBTI getMbti() {
-        return mbti;
-    }
-
-    public void setMbti(MBTI mbti) {
         this.mbti = mbti;
-    }
-
-    public LocalDateTime getCreatedDate() {
-        return createdDate;
-    }
-
-    public void setCreatedDate(LocalDateTime createdDate) {
-        this.createdDate = createdDate;
-    }
-
-    public LocalDateTime getUpdatedDate() {
-        return updatedDate;
-    }
-
-    public void setUpdatedDate(LocalDateTime updatedDate) {
-        this.updatedDate = updatedDate;
-    }
-
-    public LocalDateTime getDeletedDate() {
-        return deletedDate;
-    }
-
-    public void setDeletedDate(LocalDateTime deletedDate) {
         this.deletedDate = deletedDate;
     }
+
 }

@@ -10,7 +10,7 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")  // 모든 엔드포인트에 대해
-                .allowedOrigins("http://localhost:8080")  // 허용할 출처 (예: 프론트엔드 주소)
+                .allowedOrigins("http://localhost:3000")  // 허용할 출처 (예: 프론트엔드 주소)
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")  // 허용할 HTTP 메서드
                 .allowCredentials(true)  // 인증 정보 포함 허용
                 .maxAge(3600);  // 프리플라이트 요청에 대한 캐시 시간
