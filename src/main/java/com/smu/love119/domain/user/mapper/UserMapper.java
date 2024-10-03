@@ -42,8 +42,8 @@ public class UserMapper {
                 .username(user.getUsername())
                 .nickname(user.getNickname())
                 .password(user.getPassword())
-                .myMbti(user.getMyMbti().name()) // Enum을 String으로 변환
-                .favMbti(user.getFavMbti() != null ? user.getFavMbti().name() : null) // Enum을 String으로 변환
+                .myMbti(user.getMyMbti() != null ? user.getMyMbti().name() : null) // null 체크 추가
+                .favMbti(user.getFavMbti() != null ? user.getFavMbti().name() : null)
                 .role(user.getRole().name())
                 .build();
     }
@@ -55,8 +55,6 @@ public class UserMapper {
                 .nickname(user.getNickname())
                 .myMbti(user.getMyMbti().name()) // Enum을 String으로 변환
                 .favMbti(user.getFavMbti() != null ? user.getFavMbti().name() : null) // Enum을 String으로 변환
-                .postCount(user.getPosts().size())
-                .commentCount(user.getComments().size())
                 .build();
     }
 }

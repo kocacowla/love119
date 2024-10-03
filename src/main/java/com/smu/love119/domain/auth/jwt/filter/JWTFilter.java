@@ -33,6 +33,9 @@ public class JWTFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
+        String authorizationHeader = request.getHeader("Authorization");
+        log.info("Authorization Header: {}", authorizationHeader);
+
 
         //cookie들을 불러온 뒤 Authorization Key에 담긴 쿠키를 찾음
         String authorization = null;

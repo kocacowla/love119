@@ -4,9 +4,11 @@ import com.smu.love119.domain.user.entity.User;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+
 @Slf4j
 public class CustomUserDetailsDTO implements UserDetails {
 

@@ -50,12 +50,6 @@ public class User extends BaseEntity {
     @Column(name = "role", nullable = false)
     private RoleType role = RoleType.ROLE_USER;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Post> posts;
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<PostComment> comments;
-
 
     public enum MBTI {
         ISTJ, ISFJ, INFJ, INTJ, ISTP, ISFP, INFP, INTP, ESTP, ESFP, ENFP, ENTP, ESTJ, ESFJ, ENFJ, ENTJ
