@@ -14,7 +14,10 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
 @Service
 public class UserService {
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
@@ -111,28 +114,64 @@ public class UserService {
             throw new IllegalArgumentException("User not found");
         }
     }
-/*
-    // 회원 복구
-    public UserDTO restoreUser(String username) {
-        Optional<User> user = userRepository.findByUsername(username);
-        if (user.isPresent()) {
-            User restoredUser = user.get();
 
-            // Restore user by clearing the deleted date
-            User updatedUser = User.builder()
-                    .id(restoredUser.getId())
-                    .username(restoredUser.getUsername())
-                    .nickname(restoredUser.getNickname())
-                    .password(restoredUser.getPassword())
-                    .myMbti(restoredUser.getMyMbti())
-                    .favMbti(restoredUser.getFavMbti())
-                    .role(restoredUser.getRole())
-                    .deletedDate(null)
-                    .build();
+    // ROLE_USER인 회원만 조회
+    public List<UserDTO> getAllRoleUserMembers() {
+        List<User> users = userRepository.findByRole(User.RoleType.ROLE_USER); // ROLE_USER로 필터링된 유저만 조회
+        return users.stream()
+                .map(userMapper::toDTO)
+                .collect(Collectors.toList());
+    }
 
-            return userMapper.toDTO(userRepository.save(updatedUser));
+    // 회원 강제 탈퇴 (soft delete) - ROLE_USER만 적용
+    public void adminDeleteUser(String username) {
+        Optional<User> existingUser = userRepository.findByUsername(username);
+        if (existingUser.isPresent()) {
+            User user = existingUser.get();
+            // ROLE_USER만 탈퇴 가능하도록 필터링
+            if (user.getRole() == User.RoleType.ROLE_USER) {
+                User updatedUser = User.builder()
+                        .id(user.getId())
+                        .username(user.getUsername())
+                        .nickname(user.getNickname())
+                        .password(user.getPassword())
+                        .myMbti(user.getMyMbti())
+                        .favMbti(user.getFavMbti())
+                        .role(user.getRole())
+                        .deletedDate(LocalDateTime.now())  // 탈퇴 시간 설정
+                        .build();
+                userRepository.save(updatedUser);
+            } else {
+                throw new IllegalArgumentException("Admin or non-user role cannot be deleted");
+            }
         } else {
             throw new IllegalArgumentException("User not found");
         }
-    }*/
+    }
+
+    // 회원 복구 - ROLE_USER만 복구 가능
+    public UserDTO restoreUser(String username) {
+        Optional<User> existingUser = userRepository.findByUsername(username);
+        if (existingUser.isPresent()) {
+            User restoredUser = existingUser.get();
+            // ROLE_USER만 복구 가능
+            if (restoredUser.getRole() == User.RoleType.ROLE_USER) {
+                User updatedUser = User.builder()
+                        .id(restoredUser.getId())
+                        .username(restoredUser.getUsername())
+                        .nickname(restoredUser.getNickname())
+                        .password(restoredUser.getPassword())
+                        .myMbti(restoredUser.getMyMbti())
+                        .favMbti(restoredUser.getFavMbti())
+                        .role(restoredUser.getRole())
+                        .deletedDate(null)  // 탈퇴 취소
+                        .build();
+                return userMapper.toDTO(userRepository.save(updatedUser));
+            } else {
+                throw new IllegalArgumentException("Admin or non-user role cannot be restored");
+            }
+        } else {
+            throw new IllegalArgumentException("User not found");
+        }
+    }
 }

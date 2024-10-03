@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api")
 public class UserController {
@@ -56,14 +58,30 @@ public class UserController {
         userService.deleteUser(userDetails.getUsername());
         return ResponseEntity.noContent().build(); // HTTP 204 No Content 응답
     }
-    /*
-    // 회원 복구 (POST)
+
+    // ROLE_USER 회원 조회 (GET) - 관리자 권한만
     @PreAuthorize("hasRole('ROLE_ADMIN')")
-    @PostMapping("/restoreUser")
-    public ResponseEntity<UserDTO> restoreUser(@AuthenticationPrincipal UserDetails userDetails) {
-        UserDTO restoredUser = userService.restoreUser(userDetails.getUsername());
+    @GetMapping("/users")
+    public ResponseEntity<List<UserDTO>> getAllRoleUserMembers() {
+        List<UserDTO> users = userService.getAllRoleUserMembers();
+        return ResponseEntity.ok(users);
+    }
+
+    // 회원 강제탈퇴 (DELETE) - 관리자 권한만
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @DeleteMapping("/delete/{username}")
+    public ResponseEntity<Void> adminDeleteUser(@PathVariable String username) {
+        userService.adminDeleteUser(username);
+        return ResponseEntity.noContent().build(); // HTTP 204 No Content 응답
+    }
+
+    // 회원 복구 (POST) - 관리자 권한만
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PostMapping("/restore/{username}")
+    public ResponseEntity<UserDTO> restoreUser(@PathVariable String username) {
+        UserDTO restoredUser = userService.restoreUser(username);
         return ResponseEntity.ok(restoredUser);
     }
 
-     */
+
 }
