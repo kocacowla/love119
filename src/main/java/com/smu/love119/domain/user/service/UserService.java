@@ -1,5 +1,13 @@
 package com.smu.love119.domain.user.service;
 
+import com.smu.love119.domain.post.dto.PostCommentDto;
+import com.smu.love119.domain.post.dto.PostDTO;
+import com.smu.love119.domain.post.entity.Post;
+import com.smu.love119.domain.post.entity.PostComment;
+import com.smu.love119.domain.post.mapper.PostCommentMapper;
+import com.smu.love119.domain.post.mapper.PostMapper;
+import com.smu.love119.domain.post.repository.PostCommentRepository;
+import com.smu.love119.domain.post.repository.PostRepository;
 import com.smu.love119.domain.user.dto.MbtiUpdateRequest;
 import com.smu.love119.domain.user.dto.PasswordUpdateRequest;
 import com.smu.love119.domain.user.dto.UserDTO;
@@ -24,10 +32,23 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
 
-    public UserService(UserRepository userRepository, UserMapper userMapper, BCryptPasswordEncoder bCryptPasswordEncoder) {
+    private final PostRepository postRepository;
+    private final PostMapper postMapper;
+    private final PostCommentRepository postCommentRepository;
+    private final PostCommentMapper postCommentMapper;
+
+    public UserService(
+            UserRepository userRepository, UserMapper userMapper,
+            BCryptPasswordEncoder bCryptPasswordEncoder,
+            PostRepository postRepository, PostMapper postMapper,
+            PostCommentRepository postCommentRepository, PostCommentMapper postCommentMapper) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+        this.postRepository = postRepository;
+        this.postMapper = postMapper;
+        this.postCommentRepository = postCommentRepository;
+        this.postCommentMapper = postCommentMapper;
     }
 
     // 비밀번호만 수정
@@ -67,27 +88,27 @@ public class UserService {
         return user.map(userMapper::toDTO).orElseThrow(() -> new IllegalArgumentException("User not found"));
     }
 
-//    // Get user's posts
-//    public List<PostDTO> getUserPosts(String username) {
-//        Optional<User> user = userRepository.findByUsername(username);
-//        if (user.isPresent()) {
-//            List<Post> posts = postRepository.findByUser(user.get());
-//            return posts.stream().map(postMapper::toDTO).collect(Collectors.toList());
-//        } else {
-//            throw new IllegalArgumentException("User not found");
-//        }
-//    }
-//
-//    // Get user's comments
-//    public List<PostCommentDTO> getUserComments(String username) {
-//        Optional<User> user = userRepository.findByUsername(username);
-//        if (user.isPresent()) {
-//            List<PostComment> comments = postCommentRepository.findByUser(user.get());
-//            return comments.stream().map(postCommentMapper::toDTO).collect(Collectors.toList());
-//        } else {
-//            throw new IllegalArgumentException("User not found");
-//        }
-//    }
+    // 사용자가 작성한 게시물 조회
+    public List<PostDTO> getUserPosts(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        List<Post> posts = postRepository.findByUserAndDeletedDateIsNull(user);
+        return posts.stream()
+                .filter(post -> post.getDeletedDate() == null) // Soft delete되지 않은 게시물만 조회
+                .map(postMapper::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    // 사용자가 작성한 댓글 조회
+    public List<PostCommentDto> getUserComments(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        List<PostComment> comments = postCommentRepository.findByUserAndDeletedDateIsNull(user);
+        return comments.stream()
+                .filter(comment -> comment.getDeletedDate() == null) // Soft delete되지 않은 댓글만 조회
+                .map(postCommentMapper::toDTO)
+                .collect(Collectors.toList());
+    }
 
     // MBTI 수정
     public UserDTO updateUserMbti(String username, MbtiUpdateRequest mbtiUpdateRequest) {

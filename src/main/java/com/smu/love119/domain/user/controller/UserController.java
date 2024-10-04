@@ -1,5 +1,7 @@
 package com.smu.love119.domain.user.controller;
 
+import com.smu.love119.domain.post.dto.PostCommentDto;
+import com.smu.love119.domain.post.dto.PostDTO;
 import com.smu.love119.domain.user.dto.MbtiUpdateRequest;
 import com.smu.love119.domain.user.dto.PasswordUpdateRequest;
 import com.smu.love119.domain.user.dto.UserDTO;
@@ -42,21 +44,21 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
-//    // 마이페이지 게시물 조회
-//    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
-//    @GetMapping("/mypage/posts")
-//    public ResponseEntity<List<PostDTO>> getUserPosts(@AuthenticationPrincipal UserDetails userDetails) {
-//        List<PostDTO> posts = userService.getUserPosts(userDetails.getUsername());
-//        return ResponseEntity.ok(posts);
-//    }
-//
-//    // 마이페이지 댓글 조회
-//    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
-//    @GetMapping("/mypage/comments")
-//    public ResponseEntity<List<PostCommentDTO>> getUserComments(@AuthenticationPrincipal UserDetails userDetails) {
-//        List<PostCommentDTO> comments = userService.getUserComments(userDetails.getUsername());
-//        return ResponseEntity.ok(comments);
-//    }
+    // 마이페이지 게시물 조회
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
+    @GetMapping("/mypage/posts")
+    public ResponseEntity<List<PostDTO>> getUserPosts(@AuthenticationPrincipal UserDetails userDetails) {
+        List<PostDTO> posts = userService.getUserPosts(userDetails.getUsername());
+        return ResponseEntity.ok(posts);
+    }
+
+    // 마이페이지 댓글 조회
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
+    @GetMapping("/mypage/comments")
+    public ResponseEntity<List<PostCommentDto>> getUserComments(@AuthenticationPrincipal UserDetails userDetails) {
+        List<PostCommentDto> comments = userService.getUserComments(userDetails.getUsername());
+        return ResponseEntity.ok(comments);
+    }
 
     // MBTI 입력/수정 (PUT)
     @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")

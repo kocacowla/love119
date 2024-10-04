@@ -37,7 +37,10 @@ public class PostCommentService {
     public List<PostCommentDto> getCommentsByPostId(Long postId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new EntityNotFoundException("Post not found with id " + postId));
-        List<PostComment> comments = postCommentRepository.findAllByPost(post);
+        List<PostComment> comments = postCommentRepository.findAllByPost(post)
+                .stream()
+                .filter(comment -> comment.getDeletedDate() == null) // Soft delete된 댓글 제외
+                .collect(Collectors.toList());
         return comments.stream()
                 .map(postCommentMapper::toDTO)
                 .collect(Collectors.toList());
@@ -46,6 +49,7 @@ public class PostCommentService {
     // 댓글 ID로 조회
     public PostCommentDto getCommentById(Long commentId) {
         PostComment comment = postCommentRepository.findById(commentId)
+                .filter(c -> c.getDeletedDate() == null) // Soft delete된 댓글 제외
                 .orElseThrow(() -> new EntityNotFoundException("Comment not found with id " + commentId));
         return postCommentMapper.toDTO(comment);
     }

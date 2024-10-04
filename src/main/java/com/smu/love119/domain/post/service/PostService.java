@@ -51,11 +51,13 @@ public class PostService {
         Post savedPost = postRepository.save(post);
         return new PostResponseDTO(savedPost.getId(), savedPost.getPostTitle(), savedPost.getPostContent());
     }
+    // 모든 게시글 조회
     public List<PostResponseDTO> getAllPosts() {
-        return postRepository.findAll().stream()
+        return postRepository.findAllByDeletedDateIsNull().stream()
                 .map(postMapper::toResponseDTO)
                 .collect(Collectors.toList());
     }
+
 
 
 
@@ -89,8 +91,9 @@ public class PostService {
     }
 
 
+    // 단일 게시글 조회
     public PostResponseDTO getPostById(Long id) {
-        Post post = postRepository.findById(id)
+        Post post = postRepository.findByIdAndDeletedDateIsNull(id)
                 .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
         return postMapper.toResponseDTO(post);
     }

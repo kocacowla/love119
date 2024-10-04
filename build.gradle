@@ -49,6 +49,9 @@ dependencies {
 	// Spring Boot Starter Mail
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 
+	implementation 'org.mapstruct:mapstruct:1.5.5.Final'
+	annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
+
 	//jwt 설정
 	implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
 	implementation 'io.jsonwebtoken:jjwt-impl:0.12.3'
