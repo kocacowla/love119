@@ -57,4 +57,20 @@ public class PostComment extends BaseEntity {
         this.deletedDate = deletedDate;
     }
 
+    public void setPost(Post post) {
+        this.post = post;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    public void setLikeCount(int likeCount) {
+        this.likeCount = likeCount;
+    }
+
+    public void setCommentClass(int commentClass) {
+        this.commentClass = commentClass;
+    }
+
 }

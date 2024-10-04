@@ -1,26 +1,59 @@
 package com.smu.love119.domain.post.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import com.smu.love119.domain.post.entity.Post;
+import com.smu.love119.domain.post.dto.PostDTO;
+import com.smu.love119.domain.post.dto.PostResponseDTO;
 import com.smu.love119.domain.post.service.PostService;
+import com.smu.love119.global.apiRes.ApiResponse;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
 
+import java.nio.file.AccessDeniedException;
 import java.util.List;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:8080")
-@RequestMapping("/posts")
+@RequestMapping("/api/posts")
+@RequiredArgsConstructor
 public class PostController {
 
-    @Autowired
-    private PostService postService;
+    private final PostService postService;
 
-    // 게시글 목록을 조회하는 API
     @GetMapping
-    public List<Post> getAllPosts() {
-        return postService.getAllPosts();
+    public ApiResponse<List<PostResponseDTO>> getAllPosts() {
+        return ApiResponse.successRes(HttpStatus.OK, postService.getAllPosts());
     }
+
+    @GetMapping("/{postId}")
+    public ApiResponse<PostResponseDTO> getPostById(@PathVariable Long postId) {
+        return ApiResponse.successRes(HttpStatus.OK, postService.getPostById(postId));
+    }
+
+    @PostMapping
+    public ApiResponse<PostResponseDTO> registerPost(
+            @Valid @RequestBody PostDTO postDTO,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        return ApiResponse.successRes(HttpStatus.CREATED, postService.createPost(userDetails.getUsername(), postDTO));
+    }
+    @PutMapping("/{postId}")
+    public ApiResponse<PostResponseDTO> updatePost(
+            @PathVariable Long postId,
+            @Valid @RequestBody PostDTO postDTO,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) throws AccessDeniedException {
+        return ApiResponse.successRes(HttpStatus.OK, postService.updatePost(postId, postDTO, userDetails.getUsername()));
+    }
+
+    @DeleteMapping("/{postId}")
+    public ApiResponse<Void> deletePost(
+            @PathVariable Long postId,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) throws AccessDeniedException {
+        postService.deletePost(postId, userDetails.getUsername());
+        return ApiResponse.successRes(HttpStatus.NO_CONTENT, null);
+    }
+
 }
