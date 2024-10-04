@@ -13,7 +13,9 @@ import org.springframework.stereotype.Service;
 
 import java.nio.file.AccessDeniedException;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -22,6 +24,7 @@ public class PostService {
     private final PostRepository postRepository;
     private final PostMapper postMapper;
     private final UserRepository userRepository;
+    private final Map<String, Boolean> userPostLikes = new HashMap<>();
 
     public PostService(PostRepository postRepository, PostMapper postMapper, UserRepository userRepository) {
         this.postRepository = postRepository;
@@ -91,4 +94,41 @@ public class PostService {
                 .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다."));
         return postMapper.toResponseDTO(post);
     }
+
+    // 게시글 좋아요 추가
+    @Transactional
+    public PostResponseDTO likePost(Long postId, String username) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다. ID: " + postId));
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
+
+        if (hasUserLikedPost(post, user)) {
+            throw new IllegalStateException("이미 좋아요를 누르셨습니다.");
+        }
+
+        // 사용자 좋아요 상태 저장
+        String userPostKey = generateUserPostKey(user.getId(), postId);
+        userPostLikes.put(userPostKey, true);
+
+        // 좋아요 수 증가
+        post.setLikeCount(post.getLikeCount() + 1);
+        Post updatedPost = postRepository.save(post);
+
+        return postMapper.toResponseDTO(updatedPost);
+    }
+
+    // 사용자가 특정 게시글을 좋아요했는지 확인
+    private boolean hasUserLikedPost(Post post, User user) {
+        String userPostKey = generateUserPostKey(user.getId(), post.getId());
+        return userPostLikes.getOrDefault(userPostKey, false);
+    }
+
+    // 사용자 ID와 게시글 ID를 기반으로 고유 키 생성
+    private String generateUserPostKey(Long userId, Long postId) {
+        return userId + "_" + postId;
+    }
+
+
 }

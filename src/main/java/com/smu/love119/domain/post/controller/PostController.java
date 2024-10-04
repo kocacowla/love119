@@ -6,6 +6,7 @@ import com.smu.love119.domain.post.service.PostService;
 import com.smu.love119.global.apiRes.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.http.HttpStatus;
@@ -21,16 +22,19 @@ public class PostController {
 
     private final PostService postService;
 
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
     @GetMapping
     public ApiResponse<List<PostResponseDTO>> getAllPosts() {
         return ApiResponse.successRes(HttpStatus.OK, postService.getAllPosts());
     }
 
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
     @GetMapping("/{postId}")
     public ApiResponse<PostResponseDTO> getPostById(@PathVariable Long postId) {
         return ApiResponse.successRes(HttpStatus.OK, postService.getPostById(postId));
     }
 
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
     @PostMapping
     public ApiResponse<PostResponseDTO> registerPost(
             @Valid @RequestBody PostDTO postDTO,
@@ -38,6 +42,8 @@ public class PostController {
     ) {
         return ApiResponse.successRes(HttpStatus.CREATED, postService.createPost(userDetails.getUsername(), postDTO));
     }
+
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
     @PutMapping("/{postId}")
     public ApiResponse<PostResponseDTO> updatePost(
             @PathVariable Long postId,
@@ -47,6 +53,7 @@ public class PostController {
         return ApiResponse.successRes(HttpStatus.OK, postService.updatePost(postId, postDTO, userDetails.getUsername()));
     }
 
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
     @DeleteMapping("/{postId}")
     public ApiResponse<Void> deletePost(
             @PathVariable Long postId,
@@ -55,5 +62,14 @@ public class PostController {
         postService.deletePost(postId, userDetails.getUsername());
         return ApiResponse.successRes(HttpStatus.NO_CONTENT, null);
     }
+
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
+    @PutMapping("/{postId}/like")
+    public ApiResponse<PostResponseDTO> likePost(
+            @PathVariable Long postId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ApiResponse.successRes(HttpStatus.OK, postService.likePost(postId, userDetails.getUsername()));
+    }
+
 
 }

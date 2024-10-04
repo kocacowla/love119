@@ -12,8 +12,5 @@ import java.time.LocalDateTime;
 public class PostCommentDto {
     private Long id;
     private String content;
-    private int likeCount;
-    private int commentClass;
-    private LocalDateTime deletedDate;
 }
 

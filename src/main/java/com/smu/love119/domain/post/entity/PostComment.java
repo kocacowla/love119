@@ -42,7 +42,11 @@ public class PostComment extends BaseEntity {
     @Column(name = "deleted_date")
     private LocalDateTime deletedDate;
 
-    @Builder
+    public void setDeletedDate(LocalDateTime deletedDate) {
+        this.deletedDate = deletedDate;
+    }
+
+    @Builder(toBuilder = true)
     public PostComment(
             Post post, User user,
             String content,
