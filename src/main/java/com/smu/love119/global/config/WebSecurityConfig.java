@@ -1,4 +1,3 @@
-package com.smu.love119.global.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -20,7 +19,6 @@ public class WebSecurityConfig {
                 .and()
                 .httpBasic().disable(); // Basic Authentication 비활성화
 
-        return http.build(); // SecurityFilterChain 객체 반환
+        return http.build(); // SecurityFilterCShain 객체 반환
     }
 }
-

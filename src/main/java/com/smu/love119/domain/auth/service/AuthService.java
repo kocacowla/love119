@@ -37,6 +37,26 @@ public class AuthService {
         userRepository.save(user);
         log.info("회원가입 성공: {}", joinDTO.getUsername());
     }
+    public void adminJoinProcess(JoinDTO joinDTO) {
+        log.info("관리자 회원가입 요청: {}", joinDTO.getUsername());
+
+        // 이메일 중복 체크
+        if (isEmailDuplicated(joinDTO.getUsername())) {
+            log.warn("관리자 회원가입 실패 - 중복된 이메일: {}", joinDTO.getUsername());
+            throw new IllegalArgumentException("이미 존재하는 이메일입니다.");
+        }
+
+        // 관리자 계정 생성
+        User user = User.builder()
+                .username(joinDTO.getUsername())
+                .password(bCryptPasswordEncoder.encode(joinDTO.getPassword())) // 비밀번호 암호화
+                .nickname(joinDTO.getNickname())
+                .role(User.RoleType.ROLE_ADMIN) // ROLE_ADMIN 설정
+                .build();
+
+        userRepository.save(user);
+        log.info("관리자 회원가입 성공: {}", joinDTO.getUsername());
+    }
 
     public boolean isEmailDuplicated(String username) {
         boolean exists = userRepository.existsByUsername(username);

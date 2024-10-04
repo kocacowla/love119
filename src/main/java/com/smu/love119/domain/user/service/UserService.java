@@ -1,38 +1,61 @@
 package com.smu.love119.domain.user.service;
 
+import com.smu.love119.domain.user.dto.MbtiUpdateRequest;
+import com.smu.love119.domain.user.dto.PasswordUpdateRequest;
 import com.smu.love119.domain.user.dto.UserDTO;
 import com.smu.love119.domain.user.dto.MypageResponseDTO;
 import com.smu.love119.domain.user.entity.User;
 import com.smu.love119.domain.user.entity.User.MBTI;
 import com.smu.love119.domain.user.mapper.UserMapper;
 import com.smu.love119.domain.user.repository.UserRepository;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService {
-
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final UserRepository userRepository;
     private final UserMapper userMapper;
 
-    public UserService(UserRepository userRepository, UserMapper userMapper) {
+    public UserService(UserRepository userRepository, UserMapper userMapper, BCryptPasswordEncoder bCryptPasswordEncoder) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
+        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
     }
 
-    // 회원가입
-    public UserDTO createUser(UserDTO userDTO) {
-        User user = userMapper.toEntity(userDTO); // DTO를 Entity로 변환
-        return userMapper.toDTO(userRepository.save(user)); // Entity 저장 후 DTO로 반환
-    }
+    // 비밀번호만 수정
+    public void updatePassword(UserDetails userDetails, PasswordUpdateRequest passwordUpdateRequest) {
+        if (passwordUpdateRequest.getCurrentPassword() == null || passwordUpdateRequest.getNewPassword() == null) {
+            throw new IllegalArgumentException("Password fields cannot be null");
+        }
 
-    // 회원 정보 수정
-    public UserDTO updateUser(UserDTO userDTO) {
-        Optional<User> existingUser = userRepository.findById(userDTO.getId());
+        // 비밀번호 일치 여부 확인
+        Optional<User> existingUser = userRepository.findByUsername(userDetails.getUsername());
         if (existingUser.isPresent()) {
-            User updatedUser = userMapper.toEntity(userDTO, existingUser.get()); // 기존 Entity에 업데이트
-            return userMapper.toDTO(userRepository.save(updatedUser)); // 저장 후 DTO로 반환
+            User user = existingUser.get();
+
+            // 현재 비밀번호 확인
+            if (!bCryptPasswordEncoder.matches(passwordUpdateRequest.getCurrentPassword(), user.getPassword())) {
+                throw new IllegalArgumentException("Invalid current password");
+            }
+
+            // 새 비밀번호로 업데이트
+            User updatedUser = User.builder()
+                    .id(user.getId())
+                    .username(user.getUsername())
+                    .nickname(user.getNickname())
+                    .password(bCryptPasswordEncoder.encode(passwordUpdateRequest.getNewPassword()))  // 새로운 비밀번호 설정
+                    .role(user.getRole())
+                    .build();
+
+            userRepository.save(updatedUser);
         } else {
             throw new IllegalArgumentException("User not found");
         }
@@ -40,72 +63,135 @@ public class UserService {
 
     // 회원 정보 조회
     public UserDTO getUserByUsername(String username) {
-        Optional<User> user = userRepository.findByUsername(username); // Optional<User>로 받아야 함
-        if (user.isPresent()) {
-            return userMapper.toDTO(user.get()); // Optional에서 User를 꺼내 사용
-        } else {
-            throw new IllegalArgumentException("User not found");
-        }
+        Optional<User> user = userRepository.findByUsername(username);
+        return user.map(userMapper::toDTO).orElseThrow(() -> new IllegalArgumentException("User not found"));
     }
 
-    // 회원 탈퇴 (삭제)
-    public void deleteUser(String username) {
-        Optional<User> user = userRepository.findByUsername(username); // Optional<User>로 받아야 함
-        if (user.isPresent()) {
-            userRepository.delete(user.get()); // Optional에서 User를 꺼내 삭제
-        } else {
-            throw new IllegalArgumentException("User not found");
-        }
-    }
-
-    // 회원 복구
-    public UserDTO restoreUser(String username) {
-        Optional<User> user = userRepository.findByUsername(username); // Optional<User>로 받아야 함
-        if (user.isPresent()) {
-            User restoredUser = user.get();
-            restoredUser = User.builder()
-                    .id(restoredUser.getId())
-                    .username(restoredUser.getUsername())
-                    .nickname(restoredUser.getNickname())
-                    .password(restoredUser.getPassword())
-                    .myMbti(restoredUser.getMyMbti())
-                    .favMbti(restoredUser.getFavMbti())
-                    .role(restoredUser.getRole())
-                    .deletedDate(null) // 복구 시 삭제 날짜를 null로 설정
-                    .build();
-            return userMapper.toDTO(userRepository.save(restoredUser));
-        } else {
-            throw new IllegalArgumentException("User not found");
-        }
-    }
+//    // Get user's posts
+//    public List<PostDTO> getUserPosts(String username) {
+//        Optional<User> user = userRepository.findByUsername(username);
+//        if (user.isPresent()) {
+//            List<Post> posts = postRepository.findByUser(user.get());
+//            return posts.stream().map(postMapper::toDTO).collect(Collectors.toList());
+//        } else {
+//            throw new IllegalArgumentException("User not found");
+//        }
+//    }
+//
+//    // Get user's comments
+//    public List<PostCommentDTO> getUserComments(String username) {
+//        Optional<User> user = userRepository.findByUsername(username);
+//        if (user.isPresent()) {
+//            List<PostComment> comments = postCommentRepository.findByUser(user.get());
+//            return comments.stream().map(postCommentMapper::toDTO).collect(Collectors.toList());
+//        } else {
+//            throw new IllegalArgumentException("User not found");
+//        }
+//    }
 
     // MBTI 수정
-    public UserDTO updateUserMbti(String username, User.MBTI myMbti, User.MBTI favMbti) {
+    public UserDTO updateUserMbti(String username, MbtiUpdateRequest mbtiUpdateRequest) {
         Optional<User> user = userRepository.findByUsername(username);
         if (user.isPresent()) {
             User existingUser = user.get();
-            existingUser = User.builder()
+
+            // Update user with new MBTI values
+            User updatedUser = User.builder()
                     .id(existingUser.getId())
                     .username(existingUser.getUsername())
                     .nickname(existingUser.getNickname())
                     .password(existingUser.getPassword())
-                    .myMbti(myMbti) // myMbti 수정
-                    .favMbti(favMbti) // favMbti 수정
+                    .myMbti(mbtiUpdateRequest.getMyMbti())
+                    .favMbti(mbtiUpdateRequest.getFavMbti())
                     .role(existingUser.getRole())
                     .deletedDate(existingUser.getDeletedDate())
                     .build();
-            return userMapper.toDTO(userRepository.save(existingUser));
+
+            return userMapper.toDTO(userRepository.save(updatedUser));
         } else {
             throw new IllegalArgumentException("User not found");
         }
     }
 
+    // 회원 탈퇴 (soft delete)
+    public void deleteUser(String username) {
+        Optional<User> existingUser = userRepository.findByUsername(username);
+        if (existingUser.isPresent()) {
+            User user = existingUser.get();
 
-    // 마이페이지 정보 조회
-    public MypageResponseDTO getMyPage(String username) {
-        Optional<User> user = userRepository.findByUsername(username); // Optional<User>로 받아야 함
-        if (user.isPresent()) {
-            return userMapper.toMypageResponseDTO(user.get()); // Optional에서 User를 꺼내 사용
+            // 탈퇴 처리: deletedDate 설정
+            User updatedUser = User.builder()
+                    .id(user.getId())
+                    .username(user.getUsername())
+                    .nickname(user.getNickname())
+                    .password(user.getPassword()) // 비밀번호 유지
+                    .myMbti(user.getMyMbti()) // 기존 MBTI 유지
+                    .favMbti(user.getFavMbti()) // 기존 선호 MBTI 유지
+                    .role(user.getRole()) // 기존 권한 유지
+                    .deletedDate(LocalDateTime.now()) // 현재 시각을 탈퇴 시각으로 설정
+                    .build();
+
+            userRepository.save(updatedUser);
+        } else {
+            throw new IllegalArgumentException("User not found");
+        }
+    }
+
+    // ROLE_USER인 회원만 조회
+    public List<UserDTO> getAllRoleUserMembers() {
+        List<User> users = userRepository.findByRole(User.RoleType.ROLE_USER); // ROLE_USER로 필터링된 유저만 조회
+        return users.stream()
+                .map(userMapper::toDTO)
+                .collect(Collectors.toList());
+    }
+
+    // 회원 강제 탈퇴 (soft delete) - ROLE_USER만 적용
+    public void adminDeleteUser(String username) {
+        Optional<User> existingUser = userRepository.findByUsername(username);
+        if (existingUser.isPresent()) {
+            User user = existingUser.get();
+            // ROLE_USER만 탈퇴 가능하도록 필터링
+            if (user.getRole() == User.RoleType.ROLE_USER) {
+                User updatedUser = User.builder()
+                        .id(user.getId())
+                        .username(user.getUsername())
+                        .nickname(user.getNickname())
+                        .password(user.getPassword())
+                        .myMbti(user.getMyMbti())
+                        .favMbti(user.getFavMbti())
+                        .role(user.getRole())
+                        .deletedDate(LocalDateTime.now())  // 탈퇴 시간 설정
+                        .build();
+                userRepository.save(updatedUser);
+            } else {
+                throw new IllegalArgumentException("Admin or non-user role cannot be deleted");
+            }
+        } else {
+            throw new IllegalArgumentException("User not found");
+        }
+    }
+
+    // 회원 복구 - ROLE_USER만 복구 가능
+    public UserDTO restoreUser(String username) {
+        Optional<User> existingUser = userRepository.findByUsername(username);
+        if (existingUser.isPresent()) {
+            User restoredUser = existingUser.get();
+            // ROLE_USER만 복구 가능
+            if (restoredUser.getRole() == User.RoleType.ROLE_USER) {
+                User updatedUser = User.builder()
+                        .id(restoredUser.getId())
+                        .username(restoredUser.getUsername())
+                        .nickname(restoredUser.getNickname())
+                        .password(restoredUser.getPassword())
+                        .myMbti(restoredUser.getMyMbti())
+                        .favMbti(restoredUser.getFavMbti())
+                        .role(restoredUser.getRole())
+                        .deletedDate(null)  // 탈퇴 취소
+                        .build();
+                return userMapper.toDTO(userRepository.save(updatedUser));
+            } else {
+                throw new IllegalArgumentException("Admin or non-user role cannot be restored");
+            }
         } else {
             throw new IllegalArgumentException("User not found");
         }
