@@ -67,6 +67,28 @@ public class UserService {
         return user.map(userMapper::toDTO).orElseThrow(() -> new IllegalArgumentException("User not found"));
     }
 
+//    // Get user's posts
+//    public List<PostDTO> getUserPosts(String username) {
+//        Optional<User> user = userRepository.findByUsername(username);
+//        if (user.isPresent()) {
+//            List<Post> posts = postRepository.findByUser(user.get());
+//            return posts.stream().map(postMapper::toDTO).collect(Collectors.toList());
+//        } else {
+//            throw new IllegalArgumentException("User not found");
+//        }
+//    }
+//
+//    // Get user's comments
+//    public List<PostCommentDTO> getUserComments(String username) {
+//        Optional<User> user = userRepository.findByUsername(username);
+//        if (user.isPresent()) {
+//            List<PostComment> comments = postCommentRepository.findByUser(user.get());
+//            return comments.stream().map(postCommentMapper::toDTO).collect(Collectors.toList());
+//        } else {
+//            throw new IllegalArgumentException("User not found");
+//        }
+//    }
+
     // MBTI 수정
     public UserDTO updateUserMbti(String username, MbtiUpdateRequest mbtiUpdateRequest) {
         Optional<User> user = userRepository.findByUsername(username);
