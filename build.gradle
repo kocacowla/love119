@@ -62,6 +62,11 @@ dependencies {
 	// JSON 처리를 위해 필요할 경우 Jackson 의존성 추가 (보통 기본으로 포함되어 있음)
 	implementation 'com.fasterxml.jackson.core:jackson-databind'
 
+	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.15.2'
+	// JSON to XML
+	implementation 'org.json:json:20210307'
+	implementation 'com.fasterxml.jackson.core:jackson-databind'
+
 }
 
 tasks.named('test') {

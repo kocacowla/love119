@@ -79,4 +79,14 @@ public class PostCommentController {
         PostCommentDto updatedComment = postCommentService.likeComment(commentId, userDetails.getUsername());
         return ResponseEntity.ok(updatedComment);
     }
+
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
+    @PutMapping("/{commentId}/unlike")
+    public ResponseEntity<PostCommentDto> unlikeComment(
+            @PathVariable Long postId,
+            @PathVariable Long commentId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        PostCommentDto updatedComment = postCommentService.unlikeComment(commentId, userDetails.getUsername());
+        return ResponseEntity.ok(updatedComment);
+    }
 }

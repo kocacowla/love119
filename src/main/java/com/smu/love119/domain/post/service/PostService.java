@@ -8,6 +8,9 @@ import com.smu.love119.domain.post.repository.PostRepository;
 import com.smu.love119.domain.user.entity.User;
 import com.smu.love119.domain.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +23,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class PostService {
+
+    private static final int PAGE_SIZE = 10;
 
     private final PostRepository postRepository;
     private final PostMapper postMapper;
@@ -58,7 +63,32 @@ public class PostService {
                 .collect(Collectors.toList());
     }
 
+    // 최신 글 페이징 처리
+    public List<PostResponseDTO> getLatestPosts(int page) {
+        PageRequest pageRequest = PageRequest.of(page, PAGE_SIZE, Sort.by(Sort.Direction.DESC, "createdDate"));
+        Page<Post> posts = postRepository.findAllByDeletedDateIsNull(pageRequest);
+        return posts.getContent().stream()
+                .map(postMapper::toResponseDTO)
+                .collect(Collectors.toList());
+    }
 
+    // 인기 글(좋아요 순) 페이징 처리
+    public List<PostResponseDTO> getPopularPosts(int page) {
+        PageRequest pageRequest = PageRequest.of(page, PAGE_SIZE, Sort.by(Sort.Direction.DESC, "likeCount"));
+        Page<Post> posts = postRepository.findAllByDeletedDateIsNull(pageRequest);
+        return posts.getContent().stream()
+                .map(postMapper::toResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    // 제목, 내용 키워드 검색 페이징 처리
+    public List<PostResponseDTO> searchPosts(String keyword, int page) {
+        PageRequest pageRequest = PageRequest.of(page, PAGE_SIZE, Sort.by(Sort.Direction.DESC, "createdDate"));
+        Page<Post> posts = postRepository.searchByKeyword(keyword, pageRequest);
+        return posts.getContent().stream()
+                .map(postMapper::toResponseDTO)
+                .collect(Collectors.toList());
+    }
 
 
     public void verifyAuthor(Long postId, String username) throws AccessDeniedException {
@@ -117,6 +147,29 @@ public class PostService {
 
         // 좋아요 수 증가
         post.setLikeCount(post.getLikeCount() + 1);
+        Post updatedPost = postRepository.save(post);
+
+        return postMapper.toResponseDTO(updatedPost);
+    }
+
+    @Transactional
+    public PostResponseDTO unlikePost(Long postId, String username) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("게시글을 찾을 수 없습니다. ID: " + postId));
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다."));
+
+        if (!hasUserLikedPost(post, user)) {
+            throw new IllegalStateException("좋아요를 누르지 않은 게시글입니다.");
+        }
+
+        // 사용자 좋아요 상태 삭제
+        String userPostKey = generateUserPostKey(user.getId(), postId);
+        userPostLikes.remove(userPostKey);
+
+        // 좋아요 수 감소
+        post.setLikeCount(post.getLikeCount() - 1);
         Post updatedPost = postRepository.save(post);
 
         return postMapper.toResponseDTO(updatedPost);

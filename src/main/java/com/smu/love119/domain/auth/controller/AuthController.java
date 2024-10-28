@@ -45,13 +45,13 @@ public class AuthController {
     @GetMapping("/check-availability")
     public ResponseEntity<Map<String, String>> checkAvailability(
             @RequestParam("username") String username,
-            @RequestParam("nickname") String nickname) {
+            @RequestParam(value = "nickname", required = false) String nickname) {
 
         log.info("중복 체크 요청: username={}, nickname={}", username, nickname);
 
         Map<String, String> response = new HashMap<>();
         boolean isUsernameExist = authService.isEmailDuplicated(username);
-        boolean isNicknameExist = authService.isNicknameDuplicated(nickname);
+        boolean isNicknameExist = nickname != null && authService.isNicknameDuplicated(nickname);
 
         if (isUsernameExist) {
             response.put("emailError", "이미 존재하는 이메일입니다.");
@@ -61,10 +61,10 @@ public class AuthController {
         }
 
         if (response.isEmpty()) {
-            return ResponseEntity.ok(response);
+            return ResponseEntity.ok(response); // 중복 없음
         }
 
-        return ResponseEntity.badRequest().body(response);
+        return ResponseEntity.badRequest().body(response); // 중복 존재
     }
 
 

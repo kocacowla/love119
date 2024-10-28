@@ -135,6 +135,31 @@ public class PostCommentService {
         return postCommentMapper.toDTO(comment);
     }
 
+    @Transactional
+    public PostCommentDto unlikeComment(Long commentId, String username) {
+        PostComment comment = postCommentRepository.findById(commentId)
+                .orElseThrow(() -> new EntityNotFoundException("댓글을 찾을 수 없습니다. ID: " + commentId));
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+
+        if (!hasUserLikedComment(comment, user)) {
+            throw new IllegalStateException("좋아요를 누르지 않은 댓글입니다.");
+        }
+
+        // 좋아요 상태 제거
+        String userCommentKey = generateUserCommentKey(user.getId(), commentId);
+        userCommentLikes.remove(userCommentKey);
+
+        // 좋아요 수 감소
+        comment.setLikeCount(comment.getLikeCount() - 1);
+
+        // 변경 사항 저장
+        postCommentRepository.save(comment);
+
+        return postCommentMapper.toDTO(comment);
+    }
+
     // 좋아요 여부 확인 메서드
     private boolean hasUserLikedComment(PostComment comment, User user) {
         String userCommentKey = generateUserCommentKey(user.getId(), comment.getId());

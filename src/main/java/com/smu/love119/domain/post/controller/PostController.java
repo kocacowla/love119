@@ -29,6 +29,28 @@ public class PostController {
     }
 
     @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
+    @GetMapping("/latest")
+    public ApiResponse<List<PostResponseDTO>> getLatestPosts(
+            @RequestParam(defaultValue = "0") int page) {
+        return ApiResponse.successRes(HttpStatus.OK, postService.getLatestPosts(page));
+    }
+
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
+    @GetMapping("/popular")
+    public ApiResponse<List<PostResponseDTO>> getPopularPosts(
+            @RequestParam(defaultValue = "0") int page) {
+        return ApiResponse.successRes(HttpStatus.OK, postService.getPopularPosts(page));
+    }
+
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
+    @GetMapping("/search")
+    public ApiResponse<List<PostResponseDTO>> searchPosts(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "0") int page) {
+        return ApiResponse.successRes(HttpStatus.OK, postService.searchPosts(keyword, page));
+    }
+
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
     @GetMapping("/{postId}")
     public ApiResponse<PostResponseDTO> getPostById(@PathVariable Long postId) {
         return ApiResponse.successRes(HttpStatus.OK, postService.getPostById(postId));
@@ -69,6 +91,13 @@ public class PostController {
             @PathVariable Long postId,
             @AuthenticationPrincipal UserDetails userDetails) {
         return ApiResponse.successRes(HttpStatus.OK, postService.likePost(postId, userDetails.getUsername()));
+    }
+    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
+    @PutMapping("/{postId}/unlike")
+    public ApiResponse<PostResponseDTO> unlikePost(
+            @PathVariable Long postId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ApiResponse.successRes(HttpStatus.OK, postService.unlikePost(postId, userDetails.getUsername()));
     }
 
 
