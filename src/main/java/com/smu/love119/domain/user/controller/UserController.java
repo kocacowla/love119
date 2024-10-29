@@ -72,8 +72,10 @@ public class UserController {
     // 회원 탈퇴 (DELETE)
     @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
     @DeleteMapping("/mypage/delete")
-    public ResponseEntity<Void> deleteUser(@AuthenticationPrincipal UserDetails userDetails) {
-        userService.deleteUser(userDetails.getUsername());
+    public ResponseEntity<Void> deleteUser(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody PasswordUpdateRequest passwordRequest) {
+        userService.deleteUser(userDetails, passwordRequest.getCurrentPassword());
         return ResponseEntity.noContent().build(); // HTTP 204 No Content 응답
     }
 

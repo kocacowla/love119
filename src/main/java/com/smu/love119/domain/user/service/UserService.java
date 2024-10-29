@@ -135,10 +135,16 @@ public class UserService {
     }
 
     // 회원 탈퇴 (soft delete)
-    public void deleteUser(String username) {
-        Optional<User> existingUser = userRepository.findByUsername(username);
+    public void deleteUser(UserDetails userDetails, String inputPassword) {
+        Optional<User> existingUser = userRepository.findByUsername(userDetails.getUsername());
+
         if (existingUser.isPresent()) {
             User user = existingUser.get();
+
+            // 비밀번호 검증
+            if (!bCryptPasswordEncoder.matches(inputPassword, user.getPassword())) {
+                throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+            }
 
             // 탈퇴 처리: deletedDate 설정
             User updatedUser = User.builder()
@@ -154,7 +160,7 @@ public class UserService {
 
             userRepository.save(updatedUser);
         } else {
-            throw new IllegalArgumentException("User not found");
+            throw new IllegalArgumentException("사용자를 찾을 수 없습니다.");
         }
     }
 
