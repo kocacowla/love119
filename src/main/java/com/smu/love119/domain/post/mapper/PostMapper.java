@@ -17,16 +17,18 @@ public class PostMapper {
         this.postCommentMapper = postCommentMapper;
     }
 
-    // Post 엔티티를 PostResponseDTO로 변환, isLiked 값을 인자로 받음
+    // Post 엔티티를 PostResponseDTO로 변환, isLiked 포함
     public PostResponseDTO toResponseDTO(Post post, boolean isLiked) {
         return PostResponseDTO.builder()
                 .id(post.getId())
                 .postTitle(post.getPostTitle())
                 .postContent(post.getPostContent())
-                .mbti(post.getMbti())
-                .nickname(post.getUser().getNickname()) // 작성자 이름 매핑
-                .time(post.getCreatedDate().toString()) // 작성 시간 매핑
-                .likeCount(post.getLikeCount())
+                .mbti(post.getMbti())  // 게시글 관련 MBTI 매핑
+                .myMbti(post.getUser().getMyMbti() != null ? post.getUser().getMyMbti().name() : "Unknown")   // 작성자의 MBTI 매핑
+                .nickname(post.getUser().getNickname())  // 작성자 닉네임 매핑
+                .username(post.getUser().getUsername())
+                .time(post.getCreatedDate().toString())  // 작성 시간 매핑
+                .likeCount(post.getLikeCount())  // 좋아요 수 매핑
                 .isLiked(isLiked)  // 좋아요 여부 매핑
                 .build();
     }

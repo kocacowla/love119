@@ -8,9 +8,11 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface PostCommentMapper {
 
-    // PostComment을 PostCommentDto로 변환
+    @Mapping(source = "user.nickname", target = "nickname")  // 유저 닉네임 매핑
+    @Mapping(source = "user.username", target = "username")
+    @Mapping(source = "user.myMbti", target = "myMbti")      // 유저의 MBTI 매핑
+    @Mapping(source = "createdDate", target = "createdDate") // 생성일자 매핑
     PostCommentDto toDTO(PostComment postComment);
 
-    // PostCommentDto를 PostComment으로 변환
     PostComment toEntity(PostCommentDto postCommentDto);
 }

@@ -17,4 +17,6 @@ public class PostDTO {
     private String postTitle;
     private String postContent;
     private MBTI mbti;
+    private String myMbti;
+    private String username;
 }

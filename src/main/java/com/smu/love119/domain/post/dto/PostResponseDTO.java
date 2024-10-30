@@ -17,5 +17,7 @@ public class PostResponseDTO {
     private String time;
     private int likeCount;
     private boolean isLiked;
+    private String myMbti;
+    private String username;
 
 }
