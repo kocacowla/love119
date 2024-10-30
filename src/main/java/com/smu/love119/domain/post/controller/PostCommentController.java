@@ -86,6 +86,7 @@ public class PostCommentController {
             @PathVariable Long postId,
             @PathVariable Long commentId,
             @AuthenticationPrincipal UserDetails userDetails) {
+
         PostCommentDto updatedComment = postCommentService.unlikeComment(commentId, userDetails.getUsername());
         return ResponseEntity.ok(updatedComment);
     }

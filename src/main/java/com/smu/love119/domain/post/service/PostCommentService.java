@@ -3,9 +3,11 @@ package com.smu.love119.domain.post.service;
 import com.smu.love119.domain.post.dto.PostCommentDto;
 import com.smu.love119.domain.post.entity.Post;
 import com.smu.love119.domain.post.entity.PostComment;
+import com.smu.love119.domain.post.entity.UserCommentLike;
 import com.smu.love119.domain.post.mapper.PostCommentMapper;
 import com.smu.love119.domain.post.repository.PostCommentRepository;
 import com.smu.love119.domain.post.repository.PostRepository;
+import com.smu.love119.domain.post.repository.UserCommentLikeRepository;
 import com.smu.love119.domain.user.entity.User;
 import com.smu.love119.domain.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -29,6 +31,7 @@ public class PostCommentService {
     private final PostRepository postRepository;
     private final PostCommentMapper postCommentMapper;
     private final UserRepository userRepository; // UserRepository 주입
+    private final UserCommentLikeRepository userCommentLikeRepository;
 
     // 좋아요 상태를 저장하는 Map (userId와 commentId를 결합한 문자열을 키로 사용)
     private final Map<String, Boolean> userCommentLikes = new ConcurrentHashMap<>();
@@ -116,48 +119,39 @@ public class PostCommentService {
     // 댓글 좋아요 추가 메서드
     @Transactional
     public PostCommentDto likeComment(Long commentId, String username) {
-        PostComment comment = postCommentRepository.findById(commentId)
-                .orElseThrow(() -> new EntityNotFoundException("댓글을 찾을 수 없습니다. ID: " + commentId));
-
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+        PostComment comment = postCommentRepository.findById(commentId)
+                .orElseThrow(() -> new EntityNotFoundException("댓글을 찾을 수 없습니다."));
 
-        if (hasUserLikedComment(comment, user)) {
+        if (userCommentLikeRepository.findByUserIdAndCommentId(user.getId(), commentId).isPresent()) {
             throw new IllegalStateException("이미 좋아요를 눌렀습니다.");
         }
 
-        // 좋아요 상태 업데이트
-        String userCommentKey = generateUserCommentKey(user.getId(), commentId);
-        userCommentLikes.put(userCommentKey, true);
+        UserCommentLike like = UserCommentLike.builder()
+                .user(user)
+                .comment(comment)
+                .build();
+        userCommentLikeRepository.save(like);
 
-        // likeCount 직접 수정
         comment.setLikeCount(comment.getLikeCount() + 1);
-
-        // 변경 사항 저장
         postCommentRepository.save(comment);
+
         return postCommentMapper.toDTO(comment);
     }
 
     @Transactional
     public PostCommentDto unlikeComment(Long commentId, String username) {
-        PostComment comment = postCommentRepository.findById(commentId)
-                .orElseThrow(() -> new EntityNotFoundException("댓글을 찾을 수 없습니다. ID: " + commentId));
-
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+        PostComment comment = postCommentRepository.findById(commentId)
+                .orElseThrow(() -> new EntityNotFoundException("댓글을 찾을 수 없습니다."));
 
-        if (!hasUserLikedComment(comment, user)) {
-            throw new IllegalStateException("좋아요를 누르지 않은 댓글입니다.");
-        }
+        UserCommentLike like = userCommentLikeRepository.findByUserIdAndCommentId(user.getId(), commentId)
+                .orElseThrow(() -> new IllegalStateException("좋아요를 누르지 않은 댓글입니다."));
+        userCommentLikeRepository.delete(like);
 
-        // 좋아요 상태 제거
-        String userCommentKey = generateUserCommentKey(user.getId(), commentId);
-        userCommentLikes.remove(userCommentKey);
-
-        // 좋아요 수 감소
         comment.setLikeCount(comment.getLikeCount() - 1);
-
-        // 변경 사항 저장
         postCommentRepository.save(comment);
 
         return postCommentMapper.toDTO(comment);

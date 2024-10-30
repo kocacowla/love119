@@ -16,5 +16,7 @@ public class PostCommentDto {
     private LocalDateTime createdDate; // 생성일자 추가
     private String myMbti;
     private String username;
+    private int likeCount;
+    private boolean isLiked;
 }
 
