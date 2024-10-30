@@ -2,6 +2,7 @@ package com.smu.love119.domain.user.controller;
 
 import com.smu.love119.domain.post.dto.PostCommentDto;
 import com.smu.love119.domain.post.dto.PostDTO;
+import com.smu.love119.domain.post.dto.PostResponseDTO;
 import com.smu.love119.domain.user.dto.MbtiUpdateRequest;
 import com.smu.love119.domain.user.dto.PasswordUpdateRequest;
 import com.smu.love119.domain.user.dto.UserDTO;
@@ -47,8 +48,8 @@ public class UserController {
     // 마이페이지 게시물 조회
     @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
     @GetMapping("/mypage/posts")
-    public ResponseEntity<List<PostDTO>> getUserPosts(@AuthenticationPrincipal UserDetails userDetails) {
-        List<PostDTO> posts = userService.getUserPosts(userDetails.getUsername());
+    public ResponseEntity<List<PostResponseDTO>> getUserPosts(@AuthenticationPrincipal UserDetails userDetails) {
+        List<PostResponseDTO> posts = userService.getUserPosts(userDetails.getUsername()); // 수정된 부분
         return ResponseEntity.ok(posts);
     }
 

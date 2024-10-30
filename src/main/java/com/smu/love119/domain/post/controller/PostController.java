@@ -23,12 +23,6 @@ public class PostController {
     private final PostService postService;
 
     @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
-    @GetMapping
-    public ApiResponse<List<PostResponseDTO>> getAllPosts() {
-        return ApiResponse.successRes(HttpStatus.OK, postService.getAllPosts());
-    }
-
-    @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
     @GetMapping("/latest")
     public ApiResponse<List<PostResponseDTO>> getLatestPosts(
             @RequestParam(defaultValue = "0") int page) {
@@ -52,9 +46,14 @@ public class PostController {
 
     @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
     @GetMapping("/{postId}")
-    public ApiResponse<PostResponseDTO> getPostById(@PathVariable Long postId) {
-        return ApiResponse.successRes(HttpStatus.OK, postService.getPostById(postId));
+    public ApiResponse<PostResponseDTO> getPostById(
+            @PathVariable Long postId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ApiResponse.successRes(
+                HttpStatus.OK, postService.getPostById(postId, userDetails.getUsername())
+        );
     }
+
 
     @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
     @PostMapping
@@ -90,14 +89,19 @@ public class PostController {
     public ApiResponse<PostResponseDTO> likePost(
             @PathVariable Long postId,
             @AuthenticationPrincipal UserDetails userDetails) {
-        return ApiResponse.successRes(HttpStatus.OK, postService.likePost(postId, userDetails.getUsername()));
+
+        String username = userDetails.getUsername(); // Username 추출
+        return ApiResponse.successRes(HttpStatus.OK, postService.likePost(postId, username));
     }
+
     @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
     @PutMapping("/{postId}/unlike")
     public ApiResponse<PostResponseDTO> unlikePost(
             @PathVariable Long postId,
             @AuthenticationPrincipal UserDetails userDetails) {
-        return ApiResponse.successRes(HttpStatus.OK, postService.unlikePost(postId, userDetails.getUsername()));
+
+        String username = userDetails.getUsername(); // Username 추출
+        return ApiResponse.successRes(HttpStatus.OK, postService.unlikePost(postId, username));
     }
 
 

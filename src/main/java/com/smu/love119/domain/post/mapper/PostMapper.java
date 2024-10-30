@@ -17,30 +17,17 @@ public class PostMapper {
         this.postCommentMapper = postCommentMapper;
     }
 
-    // Only the fields included in PostDTO are mapped
-    public Post toEntity(PostDTO postDTO) {
-        return Post.builder()
-                .postTitle(postDTO.getPostTitle())
-                .postContent(postDTO.getPostContent())
-                .mbti(postDTO.getMbti())
-                .build();
-    }
-
-    // PostDTO still includes optional fields like comments and deletedDate
-    public PostDTO toDTO(Post post) {
-        return PostDTO.builder()
-                .postTitle(post.getPostTitle())
-                .postContent(post.getPostContent())
-                .mbti(post.getMbti())
-                .build();
-    }
-
-    // For the response, the mapping remains the same as before
-    public PostResponseDTO toResponseDTO(Post post) {
+    // Post 엔티티를 PostResponseDTO로 변환, isLiked 값을 인자로 받음
+    public PostResponseDTO toResponseDTO(Post post, boolean isLiked) {
         return PostResponseDTO.builder()
                 .id(post.getId())
                 .postTitle(post.getPostTitle())
                 .postContent(post.getPostContent())
+                .mbti(post.getMbti())
+                .nickname(post.getUser().getNickname()) // 작성자 이름 매핑
+                .time(post.getCreatedDate().toString()) // 작성 시간 매핑
+                .likeCount(post.getLikeCount())
+                .isLiked(isLiked)  // 좋아요 여부 매핑
                 .build();
     }
 }

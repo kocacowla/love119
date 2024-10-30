@@ -2,6 +2,7 @@ package com.smu.love119.domain.user.service;
 
 import com.smu.love119.domain.post.dto.PostCommentDto;
 import com.smu.love119.domain.post.dto.PostDTO;
+import com.smu.love119.domain.post.dto.PostResponseDTO;
 import com.smu.love119.domain.post.entity.Post;
 import com.smu.love119.domain.post.entity.PostComment;
 import com.smu.love119.domain.post.mapper.PostCommentMapper;
@@ -89,14 +90,24 @@ public class UserService {
     }
 
     // 사용자가 작성한 게시물 조회
-    public List<PostDTO> getUserPosts(String username) {
+    public List<PostResponseDTO> getUserPosts(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
         List<Post> posts = postRepository.findByUserAndDeletedDateIsNull(user);
+
+        // 게시물 리스트를 PostResponseDTO로 변환, isLiked 포함
         return posts.stream()
-                .filter(post -> post.getDeletedDate() == null) // Soft delete되지 않은 게시물만 조회
-                .map(postMapper::toDTO)
+                .map(post -> {
+                    boolean isLiked = hasUserLikedPost(post, user); // 좋아요 여부 확인
+                    return postMapper.toResponseDTO(post, isLiked); // 좋아요 상태 포함 매핑
+                })
                 .collect(Collectors.toList());
+    }
+
+    // 좋아요 여부 확인
+    private boolean hasUserLikedPost(Post post, User user) {
+        return postRepository.hasUserLikedPost(user.getId(), post.getId());
     }
 
     // 사용자가 작성한 댓글 조회

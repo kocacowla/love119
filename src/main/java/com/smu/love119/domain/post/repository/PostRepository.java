@@ -30,4 +30,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Query("SELECT p FROM Post p WHERE (p.postTitle LIKE %:keyword% OR p.postContent LIKE %:keyword%) AND p.deletedDate IS NULL")
     Page<Post> searchByKeyword(@Param("keyword") String keyword, Pageable pageable);
 
+    @Query("SELECT COUNT(upl) > 0 " +
+            "FROM UserPostLike upl WHERE upl.user.id = :userId AND upl.post.id = :postId")
+    boolean hasUserLikedPost(@Param("userId") Long userId, @Param("postId") Long postId);
+
 }
