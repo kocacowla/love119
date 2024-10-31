@@ -19,5 +19,6 @@ public class PostResponseDTO {
     private boolean isLiked;
     private String myMbti;
     private String username;
+    private String advice;
 
 }

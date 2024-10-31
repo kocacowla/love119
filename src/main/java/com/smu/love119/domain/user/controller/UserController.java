@@ -53,7 +53,7 @@ public class UserController {
         return ResponseEntity.ok(posts);
     }
 
-    // 마이페이지 댓글 조회
+    // 마이페이지 댓글 조회Z
     @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
     @GetMapping("/mypage/comments")
     public ResponseEntity<List<PostCommentDto>> getUserComments(@AuthenticationPrincipal UserDetails userDetails) {

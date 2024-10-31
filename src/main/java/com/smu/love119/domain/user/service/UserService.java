@@ -52,6 +52,11 @@ public class UserService {
         this.postCommentMapper = postCommentMapper;
     }
 
+    public User findByUsername(String username) {
+        Optional<User> user = userRepository.findByUsername(username);
+        return user.orElse(null); // 사용자 없을 시 null 반환 (예외 처리 추가 가능)
+    }
+
     // 비밀번호만 수정
     public void updatePassword(UserDetails userDetails, PasswordUpdateRequest passwordUpdateRequest) {
         if (passwordUpdateRequest.getCurrentPassword() == null || passwordUpdateRequest.getNewPassword() == null) {

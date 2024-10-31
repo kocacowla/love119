@@ -4,7 +4,7 @@ import com.smu.love119.domain.post.dto.PostDTO;
 import com.smu.love119.domain.post.dto.PostResponseDTO;
 import com.smu.love119.domain.post.entity.Post;
 import com.smu.love119.domain.post.entity.UserPostLike;
-import com.smu.love119.domain.post.entity.UserPostLikeId;
+import com.smu.love119.domain.chatbot.service.ChatbotService;
 import com.smu.love119.domain.post.mapper.PostMapper;
 import com.smu.love119.domain.post.repository.PostRepository;
 import com.smu.love119.domain.post.repository.UserPostLikeRepository;
@@ -32,21 +32,27 @@ public class PostService {
     private final PostMapper postMapper;
     private final UserRepository userRepository;
 
+    private final ChatbotService chatbotService;
+
     private final UserPostLikeRepository userPostLikeRepository;
     private final Map<String, Boolean> userPostLikes = new HashMap<>();
 
-    public PostService(PostRepository postRepository, PostMapper postMapper, UserRepository userRepository, UserPostLikeRepository userPostLikeRepository) {
+    public PostService(PostRepository postRepository, PostMapper postMapper, UserRepository userRepository, UserPostLikeRepository userPostLikeRepository, ChatbotService chatbotService) {
         this.postRepository = postRepository;
         this.postMapper = postMapper;
         this.userRepository = userRepository;
         this.userPostLikeRepository = userPostLikeRepository;
+        this.chatbotService = chatbotService;
     }
 
     // 게시글 생성
     @Transactional
     public PostResponseDTO createPost(String username, PostDTO postDTO) {
-        User user = getUserByUsername(username);  // 사용자 조회 메서드 재사용
+        // 사용자 조회 및 설정
+        User user = getUserByUsername(username);
+        postDTO.setMyMbti(user.getMyMbti().name());
 
+        // Post 생성 및 저장
         Post post = Post.builder()
                 .user(user)
                 .postTitle(postDTO.getPostTitle())
@@ -55,9 +61,23 @@ public class PostService {
                 .viewCount(0)
                 .likeCount(0)
                 .build();
-
         Post savedPost = postRepository.save(post);
-        return postMapper.toResponseDTO(savedPost, false); // 새 게시글은 기본적으로 좋아요가 눌리지 않음
+
+        // ChatGPT 조언 생성
+        String advice = chatbotService.generateAdviceForPost(
+                postDTO.getPostTitle(),
+                postDTO.getPostContent(),
+                postDTO.getMbti().name(),
+                postDTO.getMyMbti()
+        );
+
+        System.out.println("ChatGPT의 조언: " + advice); // 콘솔 출력 (프론트로 반환 가능)
+
+        // PostResponseDTO에 조언을 추가하거나 별도 반환
+        PostResponseDTO responseDTO = postMapper.toResponseDTO(savedPost, false);
+        responseDTO.setAdvice(advice); // 필요한 경우 PostResponseDTO에 조언 필드 추가
+
+        return responseDTO;
     }
 
     // 단일 게시글 조회 (좋아요 여부 포함)
@@ -89,10 +109,7 @@ public class PostService {
                 .collect(Collectors.toList());
     }
 
-    // 게시글 좋아요 처리
-    public boolean hasUserLikedPost(Long postId, Long userId) {
-        return userPostLikeRepository.existsByUserIdAndPostId(userId, postId);
-    }
+
 
     @Transactional
     public PostResponseDTO likePost(Long postId, String username) {
@@ -165,19 +182,19 @@ public class PostService {
     }
 
     // 좋아요 상태 갱신 (추가/취소)
-    private void updateLikeState(Post post, User user, boolean isLiked) {
-        String key = generateUserPostKey(user.getId(), post.getId());
-
-        if (isLiked) {
-            userPostLikes.put(key, true);
-            post.setLikeCount(post.getLikeCount() + 1);
-        } else {
-            userPostLikes.remove(key);
-            post.setLikeCount(post.getLikeCount() - 1);
-        }
-
-        postRepository.save(post);
-    }
+//    private void updateLikeState(Post post, User user, boolean isLiked) {
+//        String key = generateUserPostKey(user.getId(), post.getId());
+//
+//        if (isLiked) {
+//            userPostLikes.put(key, true);
+//            post.setLikeCount(post.getLikeCount() + 1);
+//        } else {
+//            userPostLikes.remove(key);
+//            post.setLikeCount(post.getLikeCount() - 1);
+//        }
+//
+//        postRepository.save(post);
+//    }
 
     // 삭제되지 않은 게시글 조회
     private Post findActivePostById(Long postId) {

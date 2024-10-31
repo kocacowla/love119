@@ -7,7 +7,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import com.smu.love119.domain.weather.service.WeatherService;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -26,13 +25,13 @@ public class ChatbotService {
         this.weatherService = weatherService;
     }
 
-    public String askChatGPT(String mbti, String questionType) {
+    public String askChatGPT(String mbti, String questionType, String myMbti) {
         if (!isValidMBTI(mbti)) {
             return "올바른 MBTI를 입력하세요.";
         }
 
         String weatherInfo = weatherService.getWeatherInfo(); // 날씨 정보 가져오기
-        String prompt = createPrompt(mbti, questionType, weatherInfo); // 날씨 정보와 함께 프롬프트 생성
+        String prompt = createPrompt(mbti, questionType, myMbti, weatherInfo); // user의 myMbti 정보도 포함하여 프롬프트 생성
         System.out.println("ChatGPT로 보낼 프롬프트: " + prompt);
 
         Mono<String> response = webClient.post()
@@ -45,32 +44,31 @@ public class ChatbotService {
         return response.block();
     }
 
-    private String createPrompt(String mbti, String questionType, String weatherInfo) {
-        String basePrompt = "";
 
-        switch (questionType.toLowerCase()) {
-            case "이상형":
-                basePrompt = String.format("저는 MBTI가 %s인 사람에게 관심이 있어요. 그 사람에게 어울리는 이상형은 무엇인가요?", mbti);
-                break;
-            case "데이트 코스":
-                basePrompt = String.format("%s 유형이 좋아하는 데이트 코스는?", mbti);
-                break;
-            case "선호하는 연락방식":
-                basePrompt = String.format("%s 유형의 사람이 선호하는 연락 방식은?", mbti);
-                break;
-            case "좋아하는 플러팅":
-                basePrompt = String.format("%s 유형이 좋아하는 플러팅은?", mbti);
-                break;
-            case "싫어하는 행동":
-                basePrompt = String.format("%s 유형이 싫어하는 행동은 무엇인가요?", mbti);
-                break;
-            default:
-                basePrompt = "알 수 없는 질문 유형입니다.";
-        }
-
-        // 날씨 정보 추가
-        return basePrompt + " 친한 친구가 대답해주는 것 처럼 친근하고 간결하게 대답해주세요. 또한 현재 날씨 기반으로 대답해주세요. 현재 날씨는 다음과 같습니다: " + weatherInfo;
+    private String createPrompt(String mbti, String question, String myMbti, String weatherInfo) {
+        // 유저가 입력한 질문을 그대로 프롬프트에 포함하여 전달
+        String prompt = String.format(
+                "저는 MBTI가 %s인 사람에게 관심이 있어요. 제 MBTI는 %s입니다. 사용자가 궁금해하는 질문: \"%s\". 친근하고 간결하게 대답해주세요. 현재 날씨 정보: %s",
+                mbti, myMbti, question, weatherInfo
+        );
+        return prompt;
     }
+    public String generateAdviceForPost(String postTitle, String postContent, String postMbti, String myMbti) {
+        String prompt = String.format("제목: %s\n내용: %s\n해당 사용자가 궁금해하는 MBTI: %s\n작성자의 MBTI: %s\n위의 게시글에 대해 30자 이내로 간단한 조언을 주세요.",
+                postTitle, postContent, postMbti, myMbti);
+        System.out.println("ChatGPT로 보낼 프롬프트: " + prompt);
+
+        Mono<String> response = webClient.post()
+                .header("Authorization", "Bearer " + apiKey)
+                .header("Content-Type", "application/json")
+                .bodyValue(createChatRequest("gpt-4", prompt))
+                .retrieve()
+                .bodyToMono(String.class);
+
+        return response.block();
+    }
+
+
 
     private Map<String, Object> createChatRequest(String model, String userMessage) {
         return Map.of(

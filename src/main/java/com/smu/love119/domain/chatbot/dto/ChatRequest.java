@@ -5,5 +5,5 @@ import lombok.Data;
 @Data
 public class ChatRequest {
     private String mbti;
-    private String questionType;
+    private String question;
 }
