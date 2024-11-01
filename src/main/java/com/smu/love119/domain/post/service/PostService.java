@@ -48,20 +48,8 @@ public class PostService {
     // 게시글 생성
     @Transactional
     public PostResponseDTO createPost(String username, PostDTO postDTO) {
-        // 사용자 조회 및 설정
         User user = getUserByUsername(username);
         postDTO.setMyMbti(user.getMyMbti().name());
-
-        // Post 생성 및 저장
-        Post post = Post.builder()
-                .user(user)
-                .postTitle(postDTO.getPostTitle())
-                .postContent(postDTO.getPostContent())
-                .mbti(postDTO.getMbti())
-                .viewCount(0)
-                .likeCount(0)
-                .build();
-        Post savedPost = postRepository.save(post);
 
         // ChatGPT 조언 생성
         String advice = chatbotService.generateAdviceForPost(
@@ -71,23 +59,32 @@ public class PostService {
                 postDTO.getMyMbti()
         );
 
-        System.out.println("ChatGPT의 조언: " + advice); // 콘솔 출력 (프론트로 반환 가능)
+        // Post 생성 및 저장
+        Post post = Post.builder()
+                .user(user)
+                .postTitle(postDTO.getPostTitle())
+                .postContent(postDTO.getPostContent())
+                .mbti(postDTO.getMbti())
+                .viewCount(0)
+                .likeCount(0)
+                .advice(advice) // 생성된 advice 설정
+                .build();
+        Post savedPost = postRepository.save(post);
 
-        // PostResponseDTO에 조언을 추가하거나 별도 반환
-        PostResponseDTO responseDTO = postMapper.toResponseDTO(savedPost, false);
-        responseDTO.setAdvice(advice); // 필요한 경우 PostResponseDTO에 조언 필드 추가
-
-        return responseDTO;
+        // advice 포함된 PostResponseDTO 반환
+        return postMapper.toResponseDTO(savedPost, false, advice); // advice 전달
     }
+
 
     // 단일 게시글 조회 (좋아요 여부 포함)
     @Transactional
     public PostResponseDTO getPostById(Long postId, String username) {
-        Post post = findActivePostById(postId);  // 삭제되지 않은 게시글 조회
+        Post post = findActivePostById(postId);
         User user = getUserByUsername(username);
-
         boolean isLiked = hasUserLikedPost(post, user);
-        return postMapper.toResponseDTO(post, isLiked);  // 좋아요 여부 포함하여 응답
+
+        // 저장된 advice를 사용하여 반환
+        return postMapper.toResponseDTO(post, isLiked, post.getAdvice());
     }
 
     // 최신 게시글 조회

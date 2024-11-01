@@ -1,5 +1,7 @@
 package com.smu.love119.domain.chatbot.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -48,8 +50,8 @@ public class ChatbotService {
     private String createPrompt(String mbti, String question, String myMbti, String weatherInfo) {
         // 유저가 입력한 질문을 그대로 프롬프트에 포함하여 전달
         String prompt = String.format(
-                "저는 MBTI가 %s인 사람에게 관심이 있어요. 제 MBTI는 %s입니다. 사용자가 궁금해하는 질문: \"%s\". 친근하고 간결하게 대답해주세요. 현재 날씨 정보: %s",
-                mbti, myMbti, question, weatherInfo
+                "제 MBTI는 %s입니다. 저는 MBTI가 %s인 사람에게 관심이 있는데 이 사람에 대해서 이런 게 궁금해요. : \"%s\". 가장 뒤에 현재 날씨를 첨부했어요. 현재 날씨, 제 mbti, 상대방의 mbti를 모두 고려해서 간결하게 답변해주세요. 현재 날씨 정보: %s",
+                myMbti, mbti, question, weatherInfo
         );
         return prompt;
     }
@@ -65,9 +67,31 @@ public class ChatbotService {
                 .retrieve()
                 .bodyToMono(String.class);
 
-        return response.block();
-    }
+        String adviceJson = response.block();
+        String adviceContent = "";
 
+        try {
+            // JSON 파싱을 위한 ObjectMapper
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode rootNode = objectMapper.readTree(adviceJson);
+
+            // JSON 응답에서 content 값 추출
+            adviceContent = rootNode
+                    .path("choices")
+                    .get(0)
+                    .path("message")
+                    .path("content")
+                    .asText()
+                    .replaceAll("\"", "")  // 불필요한 따옴표 제거
+                    .trim();               // 양쪽 공백 제거
+
+        } catch (Exception e) {
+            System.err.println("Error parsing advice JSON: " + e.getMessage());
+        }
+
+        // 필요 시 길이 제한
+        return adviceContent.length() > 255 ? adviceContent.substring(0, 255) : adviceContent;
+    }
 
 
     private Map<String, Object> createChatRequest(String model, String userMessage) {
@@ -83,4 +107,5 @@ public class ChatbotService {
     private boolean isValidMBTI(String mbti) {
         return List.of("INTJ", "INTP", "ENTJ", "ENTP", "INFJ", "INFP", "ENFJ", "ENFP", "ISTJ", "ISFJ", "ESTJ", "ESFJ", "ISTP", "ISFP", "ESTP", "ESFP").contains(mbti.toUpperCase());
     }
+
 }

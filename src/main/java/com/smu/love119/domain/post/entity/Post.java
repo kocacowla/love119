@@ -43,6 +43,9 @@ public class Post extends BaseEntity {
     @Column(name = "mbti", columnDefinition = "ENUM('ISTJ','ISFJ','INFJ','INTJ','ISTP','ISFP','INFP','INTP','ESTP','ESFP','ENFP','ENTP','ESTJ','ENTJ','ESFJ','ENFJ')")
     private MBTI mbti;
 
+    @Column(length = 1000)
+    private String advice; // 조언 필드 추가
+
     @Column(name = "deleted_date")
     private LocalDateTime deletedDate;
 
@@ -62,7 +65,8 @@ public class Post extends BaseEntity {
             int viewCount,
             int likeCount,
             MBTI mbti,
-            LocalDateTime deletedDate
+            LocalDateTime deletedDate,
+            String advice
     ) {
         this.user = user;
         this.postTitle = postTitle;
@@ -71,6 +75,7 @@ public class Post extends BaseEntity {
         this.likeCount = likeCount;
         this.mbti = mbti;
         this.deletedDate = deletedDate;
+        this.advice = advice;
     }
 
 }
