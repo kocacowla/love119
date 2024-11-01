@@ -59,13 +59,13 @@ public class AuthService {
     }
 
     public boolean isEmailDuplicated(String username) {
-        boolean exists = userRepository.existsByUsername(username);
+        boolean exists = userRepository.existsByUsernameAndDeletedDateIsNull(username);
         log.info("이메일 중복 체크: {}, 중복 여부: {}", username, exists);
         return exists;
     }
 
     public boolean isNicknameDuplicated(String nickname) {
-        boolean exists = userRepository.existsByNickname(nickname);
+        boolean exists = userRepository.existsByNicknameAndDeletedDateIsNull(nickname);
         log.info("닉네임 중복 체크: {}, 중복 여부: {}", nickname, exists);
         return exists;
     }

@@ -41,7 +41,6 @@ public class AuthController {
         return ResponseEntity.ok("관리자 회원가입 성공");
     }
 
-    // 이메일 및 닉네임 중복 체크
     @GetMapping("/check-availability")
     public ResponseEntity<Map<String, String>> checkAvailability(
             @RequestParam("username") String username,
@@ -50,6 +49,8 @@ public class AuthController {
         log.info("중복 체크 요청: username={}, nickname={}", username, nickname);
 
         Map<String, String> response = new HashMap<>();
+
+        // 기존의 authService 중복 체크 메서드를 활용하여 deletedDate가 null인 경우만 중복 확인
         boolean isUsernameExist = authService.isEmailDuplicated(username);
         boolean isNicknameExist = nickname != null && authService.isNicknameDuplicated(nickname);
 
@@ -66,6 +67,7 @@ public class AuthController {
 
         return ResponseEntity.badRequest().body(response); // 중복 존재
     }
+
 
 
     // username으로 인증번호 발송
