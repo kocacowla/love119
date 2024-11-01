@@ -19,4 +19,11 @@ public interface UserPostLikeRepository extends JpaRepository<UserPostLike, User
 
     Optional<UserPostLike> findByUserAndPost(User user, Post post);
 
+    // 특정 유저가 특정 게시글에 좋아요를 눌렀는지 확인
+    boolean existsByUserAndPost(User user, Post post);
+
+
+    // 특정 게시글에 대한 좋아요 삭제
+    void deleteByUserAndPost(User user, Post post);
+
 }

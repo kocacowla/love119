@@ -115,16 +115,20 @@ public class PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
-        if (postRepository.hasUserLikedPost(user.getId(), post.getId())) {
+        // 좋아요 중복 체크
+        boolean alreadyLiked = userPostLikeRepository.existsByUserAndPost(user, post);
+        if (alreadyLiked) {
             throw new RuntimeException("Already liked this post");
         }
 
+        // 새로운 좋아요 기록 추가
         UserPostLike like = UserPostLike.builder()
                 .user(user)
                 .post(post)
                 .build();
         userPostLikeRepository.save(like);
 
+        // 게시글 좋아요 수 증가
         post.setLikeCount(post.getLikeCount() + 1);
         postRepository.save(post);
 
@@ -138,10 +142,12 @@ public class PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
 
+        // 좋아요 기록 존재 여부 확인 후 삭제
         UserPostLike like = userPostLikeRepository.findByUserAndPost(user, post)
                 .orElseThrow(() -> new RuntimeException("Like not found"));
         userPostLikeRepository.delete(like);
 
+        // 게시글 좋아요 수 감소
         post.setLikeCount(post.getLikeCount() - 1);
         postRepository.save(post);
 

@@ -7,9 +7,9 @@ import com.smu.love119.domain.post.entity.UserCommentLike;
 import com.smu.love119.domain.post.mapper.PostCommentMapper;
 import com.smu.love119.domain.post.repository.PostCommentRepository;
 import com.smu.love119.domain.post.repository.PostRepository;
+import com.smu.love119.domain.user.repository.UserRepository;
 import com.smu.love119.domain.post.repository.UserCommentLikeRepository;
 import com.smu.love119.domain.user.entity.User;
-import com.smu.love119.domain.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -29,8 +29,8 @@ public class PostCommentService {
 
     private final PostCommentRepository postCommentRepository;
     private final PostRepository postRepository;
-    private final PostCommentMapper postCommentMapper;
     private final UserRepository userRepository; // UserRepository 주입
+    private final PostCommentMapper postCommentMapper;
     private final UserCommentLikeRepository userCommentLikeRepository;
 
     // 좋아요 상태를 저장하는 Map (userId와 commentId를 결합한 문자열을 키로 사용)
@@ -124,16 +124,20 @@ public class PostCommentService {
         PostComment comment = postCommentRepository.findById(commentId)
                 .orElseThrow(() -> new EntityNotFoundException("댓글을 찾을 수 없습니다."));
 
-        if (userCommentLikeRepository.findByUserIdAndCommentId(user.getId(), commentId).isPresent()) {
+        // 중복 좋아요 여부 확인
+        boolean alreadyLiked = userCommentLikeRepository.existsByUserAndComment(user, comment);
+        if (alreadyLiked) {
             throw new IllegalStateException("이미 좋아요를 눌렀습니다.");
         }
 
+        // 새로운 좋아요 기록 추가
         UserCommentLike like = UserCommentLike.builder()
                 .user(user)
                 .comment(comment)
                 .build();
         userCommentLikeRepository.save(like);
 
+        // 댓글 좋아요 수 증가
         comment.setLikeCount(comment.getLikeCount() + 1);
         postCommentRepository.save(comment);
 
@@ -147,10 +151,12 @@ public class PostCommentService {
         PostComment comment = postCommentRepository.findById(commentId)
                 .orElseThrow(() -> new EntityNotFoundException("댓글을 찾을 수 없습니다."));
 
-        UserCommentLike like = userCommentLikeRepository.findByUserIdAndCommentId(user.getId(), commentId)
+        // 좋아요 기록 확인 후 삭제
+        UserCommentLike like = userCommentLikeRepository.findByUserAndComment(user, comment)
                 .orElseThrow(() -> new IllegalStateException("좋아요를 누르지 않은 댓글입니다."));
         userCommentLikeRepository.delete(like);
 
+        // 댓글 좋아요 수 감소
         comment.setLikeCount(comment.getLikeCount() - 1);
         postCommentRepository.save(comment);
 

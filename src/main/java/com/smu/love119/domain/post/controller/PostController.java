@@ -2,10 +2,13 @@ package com.smu.love119.domain.post.controller;
 
 import com.smu.love119.domain.post.dto.PostDTO;
 import com.smu.love119.domain.post.dto.PostResponseDTO;
+import com.smu.love119.domain.post.service.LikeService;
 import com.smu.love119.domain.post.service.PostService;
+import com.smu.love119.domain.post.service.LikeService;
 import com.smu.love119.global.apiRes.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -21,6 +24,7 @@ import java.util.List;
 public class PostController {
 
     private final PostService postService;
+    private final LikeService likeService;
 
     @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
     @GetMapping("/latest")
@@ -82,6 +86,12 @@ public class PostController {
     ) throws AccessDeniedException {
         postService.deletePost(postId, userDetails.getUsername());
         return ApiResponse.successRes(HttpStatus.NO_CONTENT, null);
+    }
+
+    @GetMapping("/{postId}/is-liked")
+    public ResponseEntity<Boolean> isPostLiked(@PathVariable Long postId, @AuthenticationPrincipal UserDetails userDetails) {
+        boolean isLiked = likeService.isPostLiked(postId, userDetails.getUsername());
+        return ResponseEntity.ok(isLiked);
     }
 
     @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
