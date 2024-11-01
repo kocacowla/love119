@@ -80,6 +80,8 @@ public class UserService {
                     .nickname(user.getNickname())
                     .password(bCryptPasswordEncoder.encode(passwordUpdateRequest.getNewPassword()))  // 새로운 비밀번호 설정
                     .role(user.getRole())
+                    .myMbti(user.getMyMbti())
+                    .favMbti(user.getFavMbti())
                     .build();
 
             userRepository.save(updatedUser);
