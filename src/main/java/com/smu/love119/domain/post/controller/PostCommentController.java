@@ -90,4 +90,15 @@ public class PostCommentController {
         PostCommentDto updatedComment = postCommentService.unlikeComment(commentId, userDetails.getUsername());
         return ResponseEntity.ok(updatedComment);
     }
+
+    @GetMapping("/{commentId}/is-liked")
+    public ResponseEntity<Boolean> isCommentLiked(
+            @PathVariable Long postId,
+            @PathVariable Long commentId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        boolean isLiked = postCommentService.isCommentLiked(commentId, userDetails.getUsername());
+        return ResponseEntity.ok(isLiked);
+    }
+
 }

@@ -163,6 +163,15 @@ public class PostCommentService {
         return postCommentMapper.toDTO(comment);
     }
 
+    public boolean isCommentLiked(Long commentId, String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+        PostComment comment = postCommentRepository.findById(commentId)
+                .orElseThrow(() -> new EntityNotFoundException("댓글을 찾을 수 없습니다."));
+
+        return userCommentLikeRepository.existsByUserAndComment(user, comment);
+    }
+
     // 좋아요 여부 확인 메서드
     private boolean hasUserLikedComment(PostComment comment, User user) {
         String userCommentKey = generateUserCommentKey(user.getId(), comment.getId());
