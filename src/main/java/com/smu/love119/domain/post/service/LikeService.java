@@ -20,10 +20,10 @@ public class LikeService {
     public boolean isPostLiked(Long postId, String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new EntityNotFoundException("User not found: " + username));
-
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new EntityNotFoundException("Post not found with ID: " + postId));
 
+        // 좋아요가 존재하는지 확인하여 반환
         return userPostLikeRepository.existsByUserAndPost(user, post);
     }
 }
