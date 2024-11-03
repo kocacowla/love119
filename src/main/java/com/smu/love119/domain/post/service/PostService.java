@@ -11,8 +11,10 @@ import com.smu.love119.domain.post.repository.UserPostLikeRepository;
 import com.smu.love119.domain.user.entity.User;
 import com.smu.love119.domain.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -93,8 +95,12 @@ public class PostService {
     }
 
     // 인기 게시글 조회
-    public List<PostResponseDTO> getPopularPosts(int page) {
-        return getPagedPosts(page, Sort.by(Sort.Direction.DESC, "likeCount"));
+
+    public List<PostResponseDTO> getPopularPosts() {
+        Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "likeCount"));
+        return postRepository.findAll(pageable).getContent().stream()
+                .map(post -> postMapper.toResponseDTO(post, false)) // isLiked를 false로 설정
+                .collect(Collectors.toList());
     }
 
     // 키워드로 게시글 검색

@@ -35,9 +35,8 @@ public class PostController {
 
     @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
     @GetMapping("/popular")
-    public ApiResponse<List<PostResponseDTO>> getPopularPosts(
-            @RequestParam(defaultValue = "0") int page) {
-        return ApiResponse.successRes(HttpStatus.OK, postService.getPopularPosts(page));
+    public ApiResponse<List<PostResponseDTO>> getPopularPosts() {
+        return ApiResponse.successRes(HttpStatus.OK, postService.getPopularPosts());
     }
 
     @PreAuthorize("hasAnyRole('ROLE_USER', 'ROLE_ADMIN')")
